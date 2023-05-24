@@ -35,9 +35,11 @@ struct SketchInfo{
 };
 
 
+bool cmpGenomeSize(SketchInfo s1, SketchInfo s2);
+bool cmpSeqSize(SketchInfo s1, SketchInfo s2);
 
 void calSize(bool sketchByFile, string inputFile, int threads, uint64_t minLen, uint64_t &maxSize, uint64_t& minSize, uint64_t& averageSize);
-bool sketchSequences(string inputFile, int kmerSize, int sketchSize, string sketchFunc, bool isContainment, int containCompress, vector<SketchInfo>& sketches, int threads);
+bool sketchSequences(string inputFile, int kmerSize, int sketchSize, int minLen, string sketchFunc, bool isContainment, int containCompress, vector<SketchInfo>& sketches, int threads);
 bool sketchFiles(string inputFile, uint64_t minLen, int kmerSize, int sketchSize, string sketchFunc, bool isContainment, int containCompress, vector<SketchInfo>& sketches, int threads);
 bool cmpSketch(SketchInfo s1, SketchInfo s2);
 

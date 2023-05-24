@@ -102,9 +102,9 @@ vector<vector<int>> generateClusterWithBfs(vector<EdgeInfo> forest, int vertices
   return res;
 }
 
-vector < vector<int> > generateCluster(vector<EdgeInfo> forest, int vertices){
+vector<vector<int>> generateCluster(vector<EdgeInfo> forest, int vertices){
 	UnionFind uf(vertices);
-	vector< vector<int> > cluster;
+	vector<vector<int>> cluster;
 	for(int i = 0; i < forest.size(); i++){
 		uf.merge(forest[i].preNode, forest[i].sufNode);
 	}
@@ -171,14 +171,15 @@ vector<int> getNoiseNode(vector<PairInt> densePairArr, int alpha){
 	return noiseArr;
 }
 
-vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, string sketchFunc, int threads, int** &denseArr, int denseSpan, uint64_t* &aniArr, string prefixName, double threshold){
+
+
+vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, int start_index, int sketch_func_id, int threads, int** &denseArr, int denseSpan, uint64_t* &aniArr){
 	//int denseSpan = 10;
 	double step = 1.0 / denseSpan;
 	
-	
 	//double step = threshold / denseSpan;
 	//cerr << "the threshold is: " << threshold << endl;
-	cerr << "the step is: " << step << endl;
+	//cerr << "the step is: " << step << endl;
 	int N = sketches.size();
 	denseArr = new int*[denseSpan];
 	int** denseLocalArr = new int*[denseSpan * threads];
@@ -211,15 +212,16 @@ vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, string sketchFunc, int 
 	//int N = sketches.size();
 	uint64_t totalCompNum = (uint64_t)N * (uint64_t)(N-1)/2;
 	uint64_t percentNum = totalCompNum / 100;
-	cerr << "the percentNum is: " << percentNum << endl;
+	cerr << "---the percentNum is: " << percentNum << endl;
+	cerr << "---the start_index is: " << start_index << endl;
 	uint64_t percentId = 0;
 	#pragma omp parallel for num_threads(threads) schedule (dynamic)
 	for(id = 0; id < sketches.size() - tailNum; id+=subSize){
 		int thread_id = omp_get_thread_num();
 		for(int i = id; i < id+subSize; i++){
-			for(int j = i+1; j < sketches.size(); j++){
+			for(int j = max(i+1, start_index); j < sketches.size(); j++){
 				double tmpDist;
-				if(sketchFunc == "MinHash")
+				if(sketch_func_id == 0)
 				{
 					if(sketches[i].isContainment)
 					{
@@ -231,16 +233,16 @@ vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, string sketchFunc, int 
 						tmpDist = sketches[i].minHash->distance(sketches[j].minHash);
 					}
 				}
-				else if(sketchFunc == "KSSD"){
+				else if(sketch_func_id == 1){
 					tmpDist = sketches[i].KSSD->distance(sketches[j].KSSD);
 				}
-				else if(sketchFunc == "WMH"){
+				else if(sketch_func_id == 2){
 					tmpDist = sketches[i].WMinHash->distance(sketches[j].WMinHash);
 				}
-				else if(sketchFunc == "HLL"){
+				else if(sketch_func_id == 3){
 					tmpDist = sketches[i].HLL->distance(*sketches[j].HLL);
 				}
-				else if(sketchFunc == "OMH"){
+				else if(sketch_func_id == 4){
 					tmpDist = sketches[i].OMH->distance(*sketches[j].OMH);
 				}
 				else	
@@ -264,7 +266,7 @@ vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, string sketchFunc, int 
 		if(thread_id == 0){
 			uint64_t computedNum = (uint64_t)(N - id) * (uint64_t)id + (uint64_t)id * (uint64_t)id / 2;
 			if(computedNum >= percentId * percentNum){
-				fprintf(stderr, "finish MST generation %d %\n", percentId);
+				fprintf(stderr, "---finish MST generation %d %\n", percentId);
 				percentId++;
 			}
 		}
@@ -274,7 +276,7 @@ vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, string sketchFunc, int 
 		mstArr[thread_id].swap(tmpMst);
 		vector<EdgeInfo>().swap(tmpMst);
 	}
-	cerr << "finish the multiThreads mst generate" << endl;
+	cerr << "-----finish the 100 % multiThreads mst generate" << endl;
 
 	for(int i = 0; i < 101; i++){
 		for(int j = 0; j < threads; j++){
@@ -301,7 +303,7 @@ vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, string sketchFunc, int 
 			for(int j = i+1; j < sketches.size(); j++){
 				//double tmpDist = 1.0 - minHashes[i].minHash->jaccard(minHashes[j].minHash);
 				double tmpDist;
-				if(sketchFunc == "MinHash"){
+				if(sketch_func_id == 0){
 					if(sketches[i].isContainment)
 						//tmpDist = 1.0 - sketches[i].minHash->containJaccard(sketches[j].minHash);
 						tmpDist = sketches[i].minHash->containDistance(sketches[j].minHash);
@@ -310,14 +312,13 @@ vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, string sketchFunc, int 
 						tmpDist = sketches[i].minHash->distance(sketches[j].minHash);
 					}
 				}
-				else if(sketchFunc == "KSSD"){
+				else if(sketch_func_id == 1)
 					tmpDist = sketches[i].KSSD->distance(sketches[j].KSSD);
-				}
-				else if(sketchFunc == "WMH")
+				else if(sketch_func_id == 2) 
 					tmpDist = sketches[i].WMinHash->distance(sketches[j].WMinHash);
-				else if(sketchFunc == "HLL")
+				else if(sketch_func_id == 3)
 					tmpDist = sketches[i].HLL->distance(*sketches[j].HLL);
-				else if(sketchFunc == "OMH")
+				else if(sketch_func_id == 4)
 					tmpDist = sketches[i].OMH->distance(*sketches[j].OMH);
 				else	
 					break;
@@ -355,13 +356,54 @@ vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, string sketchFunc, int 
 
 	vector<EdgeInfo> mst = kruskalAlgorithm(finalGraph, sketches.size());
 	vector<EdgeInfo>().swap(finalGraph);
-	cerr << "finish the final mst " << endl;
 
 	return mst;
 }
 
+string build_newick_tree(vector<pair<int, double>>* G, bool* visited, const vector<SketchInfo>& sketches, bool sketch_by_file, int node){
+	visited[node] = true;
+	//if(G[node].size() == 0)	return to_string(node);
+	string name;
+	if(sketch_by_file) name = sketches[node].fileName;
+	else name = sketches[node].seqInfo.name;
+	if(G[node].size() == 0){
+		return name;
+	}
+	string children("");
+	for(auto x : G[node]){
+		int cur_node = x.first;
+		double dist = x.second;
+		if(!visited[cur_node]){
+			string child = build_newick_tree(G, visited, sketches, sketch_by_file, cur_node);
+			children += child + ':' + to_string(dist) + ',';
+		}
+	}
+	//if(children.length() == 0) return to_string(node);
+	if(children.length() == 0) return name;
+	//children = '(' + children.substr(0, children.length()-1) + ')' + to_string(node);
+	children = '(' + children.substr(0, children.length()-1) + ')' + name;
+	return children;
+}
 
 
+string get_newick_tree(const vector<SketchInfo>& sketches, const vector<EdgeInfo>& mst, bool sketch_by_file){
+	int vertice_number = sketches.size();
+	vector<pair<int, double>>* G = new vector<pair<int, double>> [vertice_number];
+	for(auto f : mst){
+		int u = f.preNode;
+		int v = f.sufNode;
+		double dist = f.dist;
+		G[u].push_back(make_pair(v, dist));
+		G[v].push_back(make_pair(u, dist));
+	}
+	bool* visited = new bool[vertice_number];
+	memset(visited, 0, vertice_number*sizeof(bool));
+
+	string newick_tree = build_newick_tree(G, visited, sketches, sketch_by_file, 0);
+	newick_tree += ';';
+
+	return newick_tree;
+}
 
 
 

@@ -44,7 +44,9 @@ std::vector<EdgeInfo> kruskalAlgorithm(std::vector<EdgeInfo>graph, int vertices)
 
 vector<EdgeInfo> generateMST(vector<SketchInfo>& sketches, string sketchFunc, int threads);
 
-vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, string sketchFunc, int threads, int** &denseArr, int denseSpan, uint64_t* &aniArr, string prefixName, double threshold);
+vector<EdgeInfo> append_MST(vector<SketchInfo>& pre_sketches, vector<SketchInfo>& append_sketches, int sketch_func_id, int threads, int ** &denseArr, int denseSpan, uint64_t* &aniArr);
+
+vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, int start_index, int sketch_func_id, int threads, int** &denseArr, int denseSpan, uint64_t* &aniArr);
 
 std::vector<EdgeInfo> generateForest(std::vector <EdgeInfo> mst, double threshhold);
 
@@ -56,5 +58,7 @@ vector<EdgeInfo> modifyForest(vector<EdgeInfo> forset, vector<int> noiseArr, int
 
 typedef pair<int, int> PairInt;
 vector<int> getNoiseNode(vector<PairInt> densePairArr, int alpha);
+
+string get_newick_tree(const vector<SketchInfo>& sketches, const vector<EdgeInfo>& mst, bool sketch_by_file);
 
 #endif

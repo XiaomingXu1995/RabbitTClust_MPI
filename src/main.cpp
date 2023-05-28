@@ -40,6 +40,7 @@
 
 #include "CLI11.hpp"
 #include "sub_command.h"
+#include <mpi.h>
 
 #ifdef GREEDY_CLUST
 #else
@@ -49,6 +50,11 @@
 using namespace std;
 
 int main(int argc, char * argv[]){
+	int my_rank, comm_sz;
+	MPI_Init(&argc, &argv);
+	MPI_Comm_size(MPI_COMM_WORLD, &comm_sz);
+	MPI_Comm_rank(MPI_COMM_WORLD, &my_rank);
+	cerr << "--------------------------my rank is: " << my_rank << endl;
 	#ifdef GREEDY_CLUST
 		CLI::App app{"clust-greedy v.2.2.1, greedy incremental clustering module for RabbitTClust"};
 	#else
@@ -133,6 +139,8 @@ int main(int argc, char * argv[]){
 		fprintf(stderr, "-----set threshold:  %d\n", threshold);
 	}
 
+	//threads = threads / comm_sz;
+
 
 #ifndef GREEDY_CLUST
 //======clust-mst=========================================================================
@@ -171,7 +179,7 @@ int main(int argc, char * argv[]){
 		return 1;
 	}
 	
-	clust_from_genomes(inputFile, outputFile, is_newick_tree, sketchByFile, kmerSize, sketchSize, threshold,sketchFunc, isContainment, containCompress, minLen, folder_path, noSave, threads);
+	clust_from_genomes(my_rank, comm_sz, inputFile, outputFile, is_newick_tree, sketchByFile, kmerSize, sketchSize, threshold,sketchFunc, isContainment, containCompress, minLen, folder_path, noSave, threads);
 
 	return 0;
 }//end main

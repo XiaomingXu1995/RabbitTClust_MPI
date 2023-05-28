@@ -171,6 +171,101 @@ vector<int> getNoiseNode(vector<PairInt> densePairArr, int alpha){
 	return noiseArr;
 }
 
+vector<EdgeInfo> distribute_build_MST(vector<SketchInfo>& sketches, int start_index, int end_index, int sketch_func_id, int threads){
+	vector<EdgeInfo> mstArr[threads];
+	int subSize = 8;
+	int id = 0;
+	int tail_num = (end_index-start_index+1) % subSize;
+	#pragma omp parallel for num_threads(threads) schedule (dynamic)
+	for(id = start_index; id < end_index-tail_num; id+=subSize){
+		int thread_id = omp_get_thread_num();
+		for(int i = id; i < id+subSize; i++){
+			for(int j = i; j < sketches.size(); j++){
+				double tmpDist;
+				if(sketch_func_id == 0)
+				{
+					if(sketches[i].isContainment)
+					{
+						//tmpDist = 1.0 - sketches[i].minHash->containJaccard(sketches[j].minHash);
+						tmpDist = sketches[i].minHash->containDistance(sketches[j].minHash);
+					}
+					else
+					{
+						tmpDist = sketches[i].minHash->distance(sketches[j].minHash);
+					}
+				}
+				else if(sketch_func_id == 1){
+					tmpDist = sketches[i].KSSD->distance(sketches[j].KSSD);
+				}
+				else if(sketch_func_id == 2){
+					tmpDist = sketches[i].WMinHash->distance(sketches[j].WMinHash);
+				}
+				else if(sketch_func_id == 3){
+					tmpDist = sketches[i].HLL->distance(*sketches[j].HLL);
+				}
+				else if(sketch_func_id == 4){
+					tmpDist = sketches[i].OMH->distance(*sketches[j].OMH);
+				}
+				else	
+					break;
+				EdgeInfo tmpE{i, j, tmpDist};
+				mstArr[thread_id].push_back(tmpE);
+			}
+		}
+
+		sort(mstArr[thread_id].begin(), mstArr[thread_id].end(), cmpEdge);
+		vector<EdgeInfo> tmpMst = kruskalAlgorithm(mstArr[thread_id], sketches.size());
+		mstArr[thread_id].swap(tmpMst);
+		vector<EdgeInfo>().swap(tmpMst);
+	}
+	if(tail_num != 0){
+		for(int i = end_index-tail_num; i < end_index; i++){
+			for(int j = i+1; j < sketches.size(); j++){
+				//double tmpDist = 1.0 - minHashes[i].minHash->jaccard(minHashes[j].minHash);
+				double tmpDist;
+				if(sketch_func_id == 0){
+					if(sketches[i].isContainment)
+						//tmpDist = 1.0 - sketches[i].minHash->containJaccard(sketches[j].minHash);
+						tmpDist = sketches[i].minHash->containDistance(sketches[j].minHash);
+					else
+					{
+						tmpDist = sketches[i].minHash->distance(sketches[j].minHash);
+					}
+				}
+				else if(sketch_func_id == 1)
+					tmpDist = sketches[i].KSSD->distance(sketches[j].KSSD);
+				else if(sketch_func_id == 2) 
+					tmpDist = sketches[i].WMinHash->distance(sketches[j].WMinHash);
+				else if(sketch_func_id == 3)
+					tmpDist = sketches[i].HLL->distance(*sketches[j].HLL);
+				else if(sketch_func_id == 4)
+					tmpDist = sketches[i].OMH->distance(*sketches[j].OMH);
+				else	
+					break;
+				EdgeInfo tmpE{i, j, tmpDist};
+				mstArr[0].push_back(tmpE);
+			}
+		}
+		if(mstArr[0].size() != 0){
+			sort(mstArr[0].begin(), mstArr[0].end(), cmpEdge);
+			vector<EdgeInfo> tmpMst = kruskalAlgorithm(mstArr[0], sketches.size());
+			mstArr[0].swap(tmpMst);
+		}
+	}
+	vector<EdgeInfo> finalGraph;
+	for(int i = 0; i < threads; i++){
+		finalGraph.insert(finalGraph.end(), mstArr[i].begin(), mstArr[i].end());
+		vector<EdgeInfo>().swap(mstArr[i]);
+	}
+
+	sort(finalGraph.begin(), finalGraph.end(), cmpEdge);
+
+	vector<EdgeInfo> mst = kruskalAlgorithm(finalGraph, sketches.size());
+	vector<EdgeInfo>().swap(finalGraph);
+	return mst;
+
+}
+
 
 
 vector<EdgeInfo> modifyMST(vector<SketchInfo>& sketches, int start_index, int sketch_func_id, int threads, int** &denseArr, int denseSpan, uint64_t* &aniArr){

@@ -60,5 +60,6 @@ typedef pair<int, int> PairInt;
 vector<int> getNoiseNode(vector<PairInt> densePairArr, int alpha);
 
 string get_newick_tree(const vector<SketchInfo>& sketches, const vector<EdgeInfo>& mst, bool sketch_by_file);
+vector<EdgeInfo> distribute_build_MST(vector<SketchInfo>& sketches, int start_index, int end_index, int sketch_func_id, int threads);
 
 #endif

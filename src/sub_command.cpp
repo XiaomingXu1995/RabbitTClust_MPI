@@ -757,6 +757,7 @@ void distribute_compute_clusters(int my_rank, int comm_sz, vector<SketchInfo>& s
 			sum_mst.insert(sum_mst.end(), cur_MST.begin(), cur_MST.end());
 			vector<EdgeInfo>().swap(cur_MST);
 		}
+		sort(sum_mst.begin(), sum_mst.end(), cmpEdge);
 		vector<EdgeInfo> final_mst = kruskalAlgorithm(sum_mst, sketches.size());
 		vector<EdgeInfo>().swap(sum_mst);
 		if(is_newick_tree){

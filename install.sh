@@ -14,11 +14,11 @@ cmake -DCMAKE_INSTALL_PREFIX=. .. &&
 make -j8 && make install && 
 cd ../../ &&
 
-##compile the clust-greedy
-#mkdir -p build && cd build &&
-#cmake -DUSE_RABBITFX=ON -DUSE_GREEDY=ON .. && 
-#make -j8 && make install &&
-#cd ../ &&
+#compile the clust-greedy
+mkdir -p build && cd build &&
+cmake -DUSE_RABBITFX=ON -DUSE_GREEDY=ON .. && 
+make -j8 && make install &&
+cd ../ &&
 
 #compile the clust-mst
 cd build &&

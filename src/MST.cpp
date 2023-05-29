@@ -175,12 +175,12 @@ vector<EdgeInfo> distribute_build_MST(vector<SketchInfo>& sketches, int start_in
 	vector<EdgeInfo> mstArr[threads];
 	int subSize = 8;
 	int id = 0;
-	int tail_num = (end_index-start_index+1) % subSize;
+	int tail_num = (end_index-start_index) % subSize;
 	#pragma omp parallel for num_threads(threads) schedule (dynamic)
 	for(id = start_index; id < end_index-tail_num; id+=subSize){
 		int thread_id = omp_get_thread_num();
 		for(int i = id; i < id+subSize; i++){
-			for(int j = i; j < sketches.size(); j++){
+			for(int j = i+1; j < sketches.size(); j++){
 				double tmpDist;
 				if(sketch_func_id == 0)
 				{

@@ -408,6 +408,7 @@ void clust_from_genomes(int my_rank, int comm_sz, string inputFile, string outpu
 	}
 	string tmp_str = "++++++++++++my rank: " + to_string(my_rank) + ", start_index: " + to_string(start_index) + ", end_index: " + to_string(end_index);
 	cout << tmp_str << endl;
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	//compute_clusters(sketches, sketchByFile, outputFile, is_newick_tree, folder_path, sketch_func_id, threshold, isSave, threads);
 	distribute_compute_clusters(my_rank, comm_sz, sketches, start_index, end_index, sketchByFile, outputFile, is_newick_tree, folder_path, sketch_func_id, threshold, isSave, threads);

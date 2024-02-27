@@ -364,8 +364,8 @@ void clust_from_genomes(int my_rank, int comm_sz, string inputFile, string outpu
 	int start_index, end_index;
 	if(my_rank != 0){
 		MPI_Send(&threads, 1, MPI_INT, 0, my_rank+comm_sz*4, MPI_COMM_WORLD);
-		MPI_Recv(&start_index, 1, MPI_UNSIGNED_LONG, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-		MPI_Recv(&end_index, 1, MPI_UNSIGNED_LONG, 0, 1, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&start_index, 1, MPI_UNSIGNED_LONG, 0, my_rank+comm_sz*5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
+		MPI_Recv(&end_index, 1, MPI_UNSIGNED_LONG, 0, my_rank+comm_sz*5, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
 	}
 	else{
 		int* thread_arr = new int[comm_sz];
@@ -402,8 +402,8 @@ void clust_from_genomes(int my_rank, int comm_sz, string inputFile, string outpu
 		end_index = end_index_arr[0];
 		for(int i = 1; i < comm_sz; i++){
 			cerr << "start_index: " << start_index_arr[i] << '\t' << "end_index: " << end_index_arr[i] << endl;
-			MPI_Send(&start_index_arr[i], 1, MPI_UNSIGNED_LONG, i, 0, MPI_COMM_WORLD);
-			MPI_Send(&end_index_arr[i], 1, MPI_UNSIGNED_LONG, i, 1, MPI_COMM_WORLD);
+			MPI_Send(&start_index_arr[i], 1, MPI_UNSIGNED_LONG, i, i+comm_sz*5, MPI_COMM_WORLD);
+			MPI_Send(&end_index_arr[i], 1, MPI_UNSIGNED_LONG, i, i+comm_sz*5, MPI_COMM_WORLD);
 		}
 	}
 	string tmp_str = "++++++++++++my rank: " + to_string(my_rank) + ", start_index: " + to_string(start_index) + ", end_index: " + to_string(end_index);
